@@ -41,3 +41,7 @@
 ## 许可证
 
 [MIT © 2020-present, pure-admin](./LICENSE)
+
+## 个人自定义分支说明
+
+在本地从 main 新建 my-custom 分支，用于自己的业务定制开发，同时继续通过 upstream 同步作者的最新更新。
