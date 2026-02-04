@@ -11,6 +11,7 @@ import type {
 } from "./types.d";
 import { stringify } from "qs";
 import { getToken, formatToken } from "@/utils/auth";
+import { message } from "@/utils/message";
 import { useUserStoreHook } from "@/store/modules/user";
 
 // 相关配置请参考：www.axios-js.com/zh-cn/docs/#axios-request-config-1
@@ -127,12 +128,22 @@ class PureHttp {
           PureHttp.initConfig.beforeResponseCallback(response);
           return response.data;
         }
+        const data = response.data as any;
+        if (data && data.success === false && data.message) {
+          message(data.message, { type: "error" });
+        }
         return response.data;
       },
       (error: PureHttpError) => {
         const $error = error;
         $error.isCancelRequest = Axios.isCancel($error);
-        // 所有的响应异常 区分来源为取消请求/非取消请求
+        const response = $error.response as any;
+        const data = response && response.data;
+        const msg =
+          (data && (data.message || data.msg)) ||
+          ($error.message as string) ||
+          "请求失败";
+        message(msg, { type: "error" });
         return Promise.reject($error);
       }
     );
