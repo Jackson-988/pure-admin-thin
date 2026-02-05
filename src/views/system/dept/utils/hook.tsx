@@ -7,7 +7,8 @@ import { usePublicHooks } from "../../hooks";
 import { addDialog } from "@/components/ReDialog";
 import { reactive, ref, onMounted, h } from "vue";
 import type { FormItemProps } from "../utils/types";
-import { cloneDeep, isAllEmpty, deviceDetection } from "@pureadmin/utils";
+import { cloneDeep, deviceDetection } from "@pureadmin/utils";
+import { createDept, updateDept, deleteDept } from "@/api/dept";
 
 export function useDept() {
   const form = reactive({
@@ -66,31 +67,25 @@ export function useDept() {
     console.log("handleSelectionChange", val);
   }
 
-  function resetForm(formEl) {
-    if (!formEl) return;
-    formEl.resetFields();
-    onSearch();
-  }
-
   async function onSearch() {
     loading.value = true;
-    const { code, data } = await getDeptList(); // 这里是返回一维数组结构，前端自行处理成树结构，返回格式要求：唯一id加父节点parentId，parentId取父节点id
+    const { code, data } = await getDeptList({
+      name: form.name,
+      status: form.status
+    });
     if (code === 0) {
-      let newData = data;
-      if (!isAllEmpty(form.name)) {
-        // 前端搜索部门名称
-        newData = newData.filter(item => item.name.includes(form.name));
-      }
-      if (!isAllEmpty(form.status)) {
-        // 前端搜索状态
-        newData = newData.filter(item => item.status === form.status);
-      }
-      dataList.value = handleTree(newData); // 处理成树结构
+      dataList.value = handleTree(data);
     }
 
     setTimeout(() => {
       loading.value = false;
     }, 500);
+  }
+
+  function resetForm(formEl) {
+    if (!formEl) return;
+    formEl.resetFields();
+    onSearch();
   }
 
   function formatHigherDeptOptions(treeList) {
@@ -110,6 +105,7 @@ export function useDept() {
       title: `${title}部门`,
       props: {
         formInline: {
+          id: row?.id,
           higherDeptOptions: formatHigherDeptOptions(cloneDeep(dataList.value)),
           parentId: row?.parentId ?? 0,
           name: row?.name ?? "",
@@ -134,19 +130,30 @@ export function useDept() {
           message(`您${title}了部门名称为${curData.name}的这条数据`, {
             type: "success"
           });
-          done(); // 关闭弹框
-          onSearch(); // 刷新表格数据
+          done();
+          onSearch();
         }
-        FormRef.validate(valid => {
+        FormRef.validate(async valid => {
           if (valid) {
-            console.log("curData", curData);
-            // 表单规则校验通过
-            if (title === "新增") {
-              // 实际开发先调用新增接口，再进行下面操作
+            const payload = {
+              parentId: curData.parentId,
+              name: curData.name,
+              principal: curData.principal,
+              phone: String(curData.phone || ""),
+              email: curData.email,
+              sort: curData.sort,
+              status: curData.status,
+              remark: curData.remark
+            };
+            try {
+              if (title === "新增" || !row?.id) {
+                await createDept(payload);
+              } else {
+                await updateDept(row.id as number, payload);
+              }
               chores();
-            } else {
-              // 实际开发先调用修改接口，再进行下面操作
-              chores();
+            } catch (error) {
+              console.error(error);
             }
           }
         });
@@ -154,9 +161,14 @@ export function useDept() {
     });
   }
 
-  function handleDelete(row) {
-    message(`您删除了部门名称为${row.name}的这条数据`, { type: "success" });
-    onSearch();
+  async function handleDelete(row) {
+    try {
+      await deleteDept(row.id);
+      message(`您删除了部门名称为${row.name}的这条数据`, { type: "success" });
+      onSearch();
+    } catch (error) {
+      console.error(error);
+    }
   }
 
   onMounted(() => {

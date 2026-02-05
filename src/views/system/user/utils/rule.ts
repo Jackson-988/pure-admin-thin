@@ -5,8 +5,24 @@ import { isPhone, isEmail } from "@pureadmin/utils";
 /** 自定义表单规则校验 */
 export const formRules = reactive(<FormRules>{
   nickname: [{ required: true, message: "用户昵称为必填项", trigger: "blur" }],
-  username: [{ required: true, message: "用户名称为必填项", trigger: "blur" }],
-  password: [{ required: true, message: "用户密码为必填项", trigger: "blur" }],
+  username: [
+    { required: true, message: "用户名称为必填项", trigger: "blur" },
+    {
+      min: 6,
+      max: 20,
+      message: "用户名长度需在6-20字符之间",
+      trigger: "blur"
+    }
+  ],
+  password: [
+    { required: true, message: "用户密码为必填项", trigger: "blur" },
+    {
+      min: 6,
+      max: 64,
+      message: "用户密码长度需在6-64字符之间",
+      trigger: "blur"
+    }
+  ],
   phone: [
     {
       validator: (rule, value, callback) => {

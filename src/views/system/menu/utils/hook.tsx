@@ -7,6 +7,7 @@ import { reactive, ref, onMounted, h } from "vue";
 import type { FormItemProps } from "../utils/types";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import { cloneDeep, isAllEmpty, deviceDetection } from "@pureadmin/utils";
+import { createMenu, updateMenu, deleteMenu } from "@/api/menu";
 
 export function useMenu() {
   const form = reactive({
@@ -97,29 +98,24 @@ export function useMenu() {
     console.log("handleSelectionChange", val);
   }
 
-  function resetForm(formEl) {
-    if (!formEl) return;
-    formEl.resetFields();
-    onSearch();
-  }
-
   async function onSearch() {
     loading.value = true;
-    const { code, data } = await getMenuList(); // 这里是返回一维数组结构，前端自行处理成树结构，返回格式要求：唯一id加父节点parentId，parentId取父节点id
+    const { code, data } = await getMenuList({
+      title: form.title
+    });
     if (code === 0) {
-      let newData = data;
-      if (!isAllEmpty(form.title)) {
-        // 前端搜索菜单名称
-        newData = newData.filter(item =>
-          String(item.title).includes(form.title)
-        );
-      }
-      dataList.value = handleTree(newData); // 处理成树结构
+      dataList.value = handleTree(data); // 处理成树结构
     }
 
     setTimeout(() => {
       loading.value = false;
     }, 500);
+  }
+
+  function resetForm(formEl) {
+    if (!formEl) return;
+    formEl.resetFields();
+    onSearch();
   }
 
   function formatHigherMenuOptions(treeList) {
@@ -178,16 +174,48 @@ export function useMenu() {
           done(); // 关闭弹框
           onSearch(); // 刷新表格数据
         }
-        FormRef.validate(valid => {
+        FormRef.validate(async valid => {
           if (valid) {
-            console.log("curData", curData);
-            // 表单规则校验通过
-            if (title === "新增") {
-              // 实际开发先调用新增接口，再进行下面操作
+            const payload = {
+              name: curData.title,
+              path: curData.path,
+              order: curData.rank,
+              acl: curData.auths || "",
+              redirect: curData.redirect || "",
+              component: curData.component || "",
+              meta: {
+                parentId: curData.parentId,
+                menuType: curData.menuType,
+                title: curData.title,
+                name: curData.name,
+                path: curData.path,
+                component: curData.component,
+                rank: curData.rank,
+                redirect: curData.redirect,
+                icon: curData.icon,
+                extraIcon: curData.extraIcon,
+                enterTransition: curData.enterTransition,
+                leaveTransition: curData.leaveTransition,
+                activePath: curData.activePath,
+                auths: curData.auths,
+                frameSrc: curData.frameSrc,
+                frameLoading: curData.frameLoading,
+                keepAlive: curData.keepAlive,
+                hiddenTag: curData.hiddenTag,
+                fixedTag: curData.fixedTag,
+                showLink: curData.showLink,
+                showParent: curData.showParent
+              }
+            };
+            try {
+              if (title === "新增" || !row?.id) {
+                await createMenu(payload);
+              } else {
+                await updateMenu(row.id as number, payload);
+              }
               chores();
-            } else {
-              // 实际开发先调用修改接口，再进行下面操作
-              chores();
+            } catch (error) {
+              console.error(error);
             }
           }
         });
@@ -195,11 +223,16 @@ export function useMenu() {
     });
   }
 
-  function handleDelete(row) {
-    message(`您删除了菜单名称为${row.title}的这条数据`, {
-      type: "success"
-    });
-    onSearch();
+  async function handleDelete(row) {
+    try {
+      await deleteMenu(row.id);
+      message(`您删除了菜单名称为${row.title}的这条数据`, {
+        type: "success"
+      });
+      onSearch();
+    } catch (error) {
+      console.error(error);
+    }
   }
 
   onMounted(() => {

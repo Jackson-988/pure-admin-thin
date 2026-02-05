@@ -35,6 +35,11 @@ export type RefreshTokenResult = {
   };
 };
 
+export type SimpleResult = {
+  code: number;
+  message: string;
+};
+
 /** 登录 */
 // export const getLogin = (data?: object) => {
 //   return http.request<UserResult>("post", "/login", { data });
@@ -50,4 +55,42 @@ export const refreshTokenApi = (data?: object) => {
 /** 登录 */
 export const getLogin = (data?: object) => {
   return http.request<UserResult>("post", baseUrlApi("login"), { data });
+};
+
+export const createUserApi = (data?: object) => {
+  return http.request<SimpleResult>("post", baseUrlApi("user/admin"), {
+    data
+  });
+};
+
+export const updateUserApi = (id: number, data?: object) => {
+  return http.request<SimpleResult>("patch", baseUrlApi(`user/admin/${id}`), {
+    data
+  });
+};
+
+export const deleteUserApi = (id: number) => {
+  return http.request<SimpleResult>("delete", baseUrlApi(`user/${id}`));
+};
+
+export const updateUserStatusApi = (id: number, status: number) => {
+  return http.request<SimpleResult>("patch", baseUrlApi(`user/${id}/status`), {
+    data: { status }
+  });
+};
+
+export const resetUserPasswordApi = (id: number, password: string) => {
+  return http.request<SimpleResult>(
+    "patch",
+    baseUrlApi(`user/${id}/password`),
+    {
+      data: { password }
+    }
+  );
+};
+
+export const updateUserRolesApi = (id: number, roleIds: number[]) => {
+  return http.request<SimpleResult>("patch", baseUrlApi(`user/${id}/roles`), {
+    data: { roleIds }
+  });
 };
