@@ -27,6 +27,10 @@ export default ({ mode }: ConfigEnv): UserConfigExport => {
           target: "http://localhost:3000",
           changeOrigin: true
           // rewrite: path => path.replace(/^\/api\/v1/, "")
+        },
+        "/uploads": {
+          target: "http://localhost:3000",
+          changeOrigin: true
         }
       },
       warmup: {
