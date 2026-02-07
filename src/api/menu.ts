@@ -6,7 +6,6 @@ export type MenuEntity = {
   name: string;
   path: string;
   order: number;
-  acl: string;
   redirect?: string | null;
   component?: string | null;
   meta?: Record<string, any> | null;
