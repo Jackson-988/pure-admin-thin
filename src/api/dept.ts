@@ -1,5 +1,6 @@
 import { http } from "@/utils/http";
 import { baseUrlApi } from "./utils";
+import type { ApiResult } from "./types";
 
 export type DeptEntity = {
   id: number;
@@ -15,44 +16,33 @@ export type DeptEntity = {
   updateTime: string | Date;
 };
 
-export type DeptListResult = {
-  success: boolean;
-  data: DeptEntity[];
-};
-
-export type DeptDetailResult = {
-  success: boolean;
-  data: DeptEntity | null;
-};
-
-export type DeptMutationResult = {
-  success: boolean;
-  data: DeptEntity;
-};
-
 export const getDeptListApi = () => {
-  return http.request<DeptListResult>("get", baseUrlApi("depts"));
+  return http.request<ApiResult<DeptEntity[]>>("get", baseUrlApi("depts"));
 };
 
 export const getDeptDetail = (id: number) => {
-  return http.request<DeptDetailResult>("get", baseUrlApi(`depts/${id}`));
+  return http.request<ApiResult<DeptEntity | null>>(
+    "get",
+    baseUrlApi(`depts/${id}`)
+  );
 };
 
 export const createDept = (data: Partial<DeptEntity>) => {
-  return http.request<DeptMutationResult>("post", baseUrlApi("depts"), {
+  return http.request<ApiResult<DeptEntity>>("post", baseUrlApi("depts"), {
     data
   });
 };
 
 export const updateDept = (id: number, data: Partial<DeptEntity>) => {
-  return http.request<DeptMutationResult>("patch", baseUrlApi(`depts/${id}`), {
-    data
-  });
+  return http.request<ApiResult<DeptEntity>>(
+    "patch",
+    baseUrlApi(`depts/${id}`),
+    {
+      data
+    }
+  );
 };
 
 export const deleteDept = (id: number) => {
-  return http.request<{ success: boolean; data: null }>(
-    "delete",
-    baseUrlApi(`depts/${id}`)
-  );
+  return http.request<ApiResult<null>>("delete", baseUrlApi(`depts/${id}`));
 };

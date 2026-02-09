@@ -129,10 +129,16 @@ class PureHttp {
           return response.data;
         }
         const data = response.data as any;
+        if (data && typeof data.code === "number") {
+          if (data.code !== 0 && data.message) {
+            message(data.message, { type: "error" });
+          }
+          return data;
+        }
         if (data && data.success === false && data.message) {
           message(data.message, { type: "error" });
         }
-        return response.data;
+        return data;
       },
       (error: PureHttpError) => {
         const $error = error;
